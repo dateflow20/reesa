@@ -17,7 +17,7 @@ export default async (req: Request, context: Context) => {
         const isUrl = input.startsWith('http');
 
         const response = await ai.models.generateContent({
-            model: 'gemini-1.5-pro',
+            model: 'gemini-1.5-flash',
             contents: `Analyze the following ${isUrl ? 'URL' : 'service description'}: "${input}". 
       Extract the core business value, its target audience, and identify the most relevant keywords and subreddits for finding potential leads.
       Focus on "buyer intent" keywords (e.g., "alternative to", "how to solve", "looking for").`,
