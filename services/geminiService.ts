@@ -17,7 +17,13 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { ServiceAnalysis, RedditLead } from "../types";
 
 console.log("Gemini API Key:", import.meta.env.VITE_GEMINI_API_KEY ? "Present" : "Missing");
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+if (!apiKey) {
+  console.error("Gemini API Key is missing! Please add VITE_GEMINI_API_KEY to your .env file or Netlify environment variables.");
+}
+
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 /**
  * Uses Gemini-3-Pro to decompose a user's service into search parameters.
@@ -25,6 +31,7 @@ const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
  * @returns ServiceAnalysis object containing keywords and target niches.
  */
 export const analyzeService = async (input: string): Promise<ServiceAnalysis> => {
+  if (!ai) throw new Error("Gemini API Key is missing. Cannot perform analysis.");
   const isUrl = input.startsWith('http');
 
   const response = await ai.models.generateContent({
@@ -48,7 +55,7 @@ export const analyzeService = async (input: string): Promise<ServiceAnalysis> =>
     }
   });
 
-  return JSON.parse(response.text());
+  return JSON.parse(response.text as unknown as string);
 };
 
 /**
@@ -62,6 +69,7 @@ export const qualifyLeads = async (
   analysis: ServiceAnalysis
 ): Promise<RedditLead[]> => {
   if (leads.length === 0) return [];
+  if (!ai) throw new Error("Gemini API Key is missing. Cannot qualify leads.");
 
   const prompt = `You are a growth hacker for ${analysis.name} (${analysis.summary}).
   Analyze these ${leads.length} Reddit entries.
@@ -97,7 +105,7 @@ export const qualifyLeads = async (
     }
   });
 
-  const evaluations = JSON.parse(response.text());
+  const evaluations = JSON.parse(response.text as unknown as string);
 
   return leads.map((lead, i) => {
     const evalItem = evaluations.find((e: any) => e.index === i);
