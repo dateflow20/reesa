@@ -299,8 +299,9 @@ const App: React.FC = () => {
         activeSubreddits: analysis.suggestedSubreddits,
         analyzing: false
       }));
-    } catch (err) {
-      setState(prev => ({ ...prev, error: 'Analysis failed. Please try again.', analyzing: false }));
+    } catch (err: any) {
+      console.error("Analysis Error:", err);
+      setState(prev => ({ ...prev, error: err.message || 'Analysis failed. Please check your connection.', analyzing: false }));
     }
   };
 
