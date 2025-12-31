@@ -204,17 +204,20 @@ const App: React.FC = () => {
       recognitionRef.current.interimResults = true;
 
       recognitionRef.current.onresult = (event: any) => {
-        let currentTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          currentTranscript += event.results[i][0].transcript;
+        let final = '';
+        let interim = '';
+        for (let i = 0; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            final += event.results[i][0].transcript;
+          } else {
+            interim += event.results[i][0].transcript;
+          }
         }
-        setTranscript(prev => prev + currentTranscript);
+        setTranscript(final + interim);
       };
 
       recognitionRef.current.onend = () => {
         if (isListening) {
-          // If it stopped but we think we are listening (e.g. silence), restart or just stop?
-          // For better UX, let's just stop and process.
           stopListening();
         }
       };
@@ -245,28 +248,30 @@ const App: React.FC = () => {
       setIsProcessingAudio(true);
 
       try {
-        // Send raw transcript to Gemini for refinement
+        // Call the refinement API
         const response = await fetch('/api/gemini-refine', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ transcript: transcript.trim() })
+          body: JSON.stringify({ text: transcript })
         });
 
         if (response.ok) {
           const data = await response.json();
+          const refinedText = data.refinedText || transcript; // Fallback to raw if empty
+
           setInput(prev => {
             const lastChar = prev.slice(-1);
             const separator = (lastChar && lastChar !== ' ') ? ' ' : '';
-            return prev + separator + data.refinedText;
+            return prev + separator + refinedText.trim();
           });
         } else {
-          // Fallback to raw transcript if AI fails
-          console.error("Refinement failed, using raw transcript");
-          setInput(prev => prev + ' ' + transcript.trim());
+          // Fallback if API fails
+          console.error("Refinement failed", await response.text());
+          setInput(prev => prev + ' ' + transcript);
         }
-      } catch (error) {
-        console.error("Refinement error", error);
-        setInput(prev => prev + ' ' + transcript.trim());
+      } catch (err) {
+        console.error("Refinement error", err);
+        setInput(prev => prev + ' ' + transcript);
       } finally {
         setTranscript('');
         setIsProcessingAudio(false);
@@ -607,7 +612,7 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md animate-fade-in">
           <div className="w-16 h-16 border-4 border-rose-900/20 border-t-rose-600 rounded-full animate-spin mb-6"></div>
           <h3 className="text-xl font-black uppercase tracking-widest text-white">Processing Audio</h3>
-          <p className="mt-2 text-zinc-400 text-sm">Refining transcript with Gemini AI...</p>
+          <p className="mt-2 text-zinc-400 text-sm">Refining your input...</p>
         </div>
       )}
 

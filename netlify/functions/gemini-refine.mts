@@ -12,20 +12,24 @@ export default async (req: Request, context: Context) => {
     }
 
     try {
-        const { transcript } = await req.json();
+        const { text } = await req.json();
         const ai = new GoogleGenAI({ apiKey });
 
         const response = await ai.models.generateContent({
             model: 'gemini-1.5-flash',
-            contents: `You are an expert editor. The user is speaking a business idea or marketing context for a lead generation tool. 
-      The speech-to-text output is messy and may contain errors.
+            contents: `You are a helpful AI assistant that refines voice-to-text transcripts.
+      The user was speaking to an AI to describe a business or service.
+      The raw transcript may contain stuttering, repetitions, or nonsense words due to audio glitches.
       
-      Raw Transcript: "${transcript}"
+      Task:
+      1. Fix grammar and remove repetitions/stuttering.
+      2. Ensure the text makes sense as a description of a service or a request.
+      3. Keep it concise but preserve the original intent.
+      4. If the text is completely gibberish, return "Unable to understand audio."
       
-      Task: Rewrite this transcript to be clear, professional, and concise. 
-      - Fix grammar and nonsensical words based on context.
-      - Keep the core business meaning.
-      - Do NOT add any conversational filler (like "Here is the corrected text"). Just return the cleaned text.`,
+      Raw Transcript: "${text}"
+      
+      Return ONLY the refined text.`,
         });
 
         return new Response(JSON.stringify({ refinedText: (response as any).text() }), { headers: { "Content-Type": "application/json" } });
