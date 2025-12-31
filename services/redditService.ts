@@ -13,29 +13,19 @@
 
 import { RedditLead, TimeFilter } from "../types";
 
-// Note: These credentials are provided for the specific documentation task.
-const CLIENT_ID = import.meta.env.VITE_REDDIT_CLIENT_ID;
-const CLIENT_SECRET = import.meta.env.VITE_REDDIT_CLIENT_SECRET;
-
 /**
  * Obtains a fresh access token for the Reddit API.
- * Uses the OAuth2 Client Credentials grant type.
+ * Uses the server-side proxy to keep credentials secure.
  */
 export const getAccessToken = async (): Promise<string> => {
-  const auth = btoa(`${CLIENT_ID}:${CLIENT_SECRET}`);
-  const response = await fetch('https://www.reddit.com/api/v1/access_token', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Basic ${auth}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: 'grant_type=client_credentials'
+  const response = await fetch('/api/reddit-token', {
+    method: 'POST'
   });
 
   if (!response.ok) {
     const errorText = await response.text();
     console.error('Reddit Auth Error:', response.status, errorText);
-    throw new Error(`Auth failed: ${response.status}. Please check Reddit Client ID/Secret.`);
+    throw new Error(`Auth failed: ${response.status}.`);
   }
 
   const data = await response.json();
