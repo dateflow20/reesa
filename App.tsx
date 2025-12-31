@@ -237,22 +237,40 @@ const App: React.FC = () => {
     }
   };
 
-  const stopListening = () => {
+  const stopListening = async () => {
     if (recognitionRef.current) recognitionRef.current.stop();
     setIsListening(false);
 
     if (transcript.trim()) {
       setIsProcessingAudio(true);
-      // Simulate processing delay for UX or actual processing if needed
-      setTimeout(() => {
-        setInput(prev => {
-          const lastChar = prev.slice(-1);
-          const separator = (lastChar && lastChar !== ' ') ? ' ' : '';
-          return prev + separator + transcript.trim();
+
+      try {
+        // Send raw transcript to Gemini for refinement
+        const response = await fetch('/api/gemini-refine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transcript: transcript.trim() })
         });
+
+        if (response.ok) {
+          const data = await response.json();
+          setInput(prev => {
+            const lastChar = prev.slice(-1);
+            const separator = (lastChar && lastChar !== ' ') ? ' ' : '';
+            return prev + separator + data.refinedText;
+          });
+        } else {
+          // Fallback to raw transcript if AI fails
+          console.error("Refinement failed, using raw transcript");
+          setInput(prev => prev + ' ' + transcript.trim());
+        }
+      } catch (error) {
+        console.error("Refinement error", error);
+        setInput(prev => prev + ' ' + transcript.trim());
+      } finally {
         setTranscript('');
         setIsProcessingAudio(false);
-      }, 800);
+      }
     }
   };
 
@@ -589,7 +607,7 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md animate-fade-in">
           <div className="w-16 h-16 border-4 border-rose-900/20 border-t-rose-600 rounded-full animate-spin mb-6"></div>
           <h3 className="text-xl font-black uppercase tracking-widest text-white">Processing Audio</h3>
-          <p className="mt-2 text-zinc-400 text-sm">Refining your input...</p>
+          <p className="mt-2 text-zinc-400 text-sm">Refining transcript with Gemini AI...</p>
         </div>
       )}
 
