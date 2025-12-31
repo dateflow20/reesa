@@ -173,6 +173,9 @@ const App: React.FC = () => {
   const [feedbackText, setFeedbackText] = useState('');
   const [isListening, setIsListening] = useState(false);
 
+  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
+  const [transcript, setTranscript] = useState('');
+
   const recognitionRef = useRef<any>(null);
 
   const [state, setState] = useState<AppState>({
@@ -201,29 +204,61 @@ const App: React.FC = () => {
       recognitionRef.current.interimResults = true;
 
       recognitionRef.current.onresult = (event: any) => {
-        let transcript = '';
+        let currentTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
+          currentTranscript += event.results[i][0].transcript;
         }
+        setTranscript(prev => prev + currentTranscript);
+      };
+
+      recognitionRef.current.onend = () => {
+        if (isListening) {
+          // If it stopped but we think we are listening (e.g. silence), restart or just stop?
+          // For better UX, let's just stop and process.
+          stopListening();
+        }
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error("Speech error", event);
+        stopListening();
+      };
+    }
+  }, [isListening]); // Re-bind if needed, but ref should be stable.
+
+  const startListening = () => {
+    if (!recognitionRef.current) return alert('Speech recognition is not supported.');
+    setTranscript('');
+    try {
+      recognitionRef.current.start();
+      setIsListening(true);
+    } catch (e) {
+      console.error('Speech start error', e);
+    }
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) recognitionRef.current.stop();
+    setIsListening(false);
+
+    if (transcript.trim()) {
+      setIsProcessingAudio(true);
+      // Simulate processing delay for UX or actual processing if needed
+      setTimeout(() => {
         setInput(prev => {
           const lastChar = prev.slice(-1);
           const separator = (lastChar && lastChar !== ' ') ? ' ' : '';
-          return prev + separator + transcript;
+          return prev + separator + transcript.trim();
         });
-      };
-
-      recognitionRef.current.onend = () => setIsListening(false);
-      recognitionRef.current.onerror = () => setIsListening(false);
+        setTranscript('');
+        setIsProcessingAudio(false);
+      }, 800);
     }
-  }, []);
+  };
 
   const toggleListening = () => {
-    if (!recognitionRef.current) return alert('Speech recognition is not supported.');
-    if (isListening) recognitionRef.current.stop();
-    else {
-      try { recognitionRef.current.start(); setIsListening(true); }
-      catch (e) { console.error('Speech start error', e); }
-    }
+    if (isListening) stopListening();
+    else startListening();
   };
 
   const handleAnalyze = async (e: React.FormEvent) => {
@@ -526,6 +561,35 @@ const App: React.FC = () => {
             <textarea required value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)} placeholder="Tell us how we can improve..." className="w-full h-44 px-6 py-6 rounded-[2rem] bg-black/60 border border-white/5 text-white outline-none focus:border-rose-500/50 transition-all text-sm font-medium mb-8 shadow-inner" />
             <button onClick={() => setIsFeedbackOpen(false)} className="w-full bg-rose-600 py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-rose-500 transition-all">Submit Protocol</button>
           </div>
+        </div>
+      )}
+
+      {/* Audio Recording Overlay */}
+      {isListening && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md animate-fade-in cursor-pointer" onClick={stopListening}>
+          <div className="relative">
+            <div className="absolute inset-0 bg-rose-500 rounded-full animate-ping opacity-75"></div>
+            <div className="relative bg-rose-600 p-8 rounded-full shadow-[0_0_50px_rgba(225,29,72,0.6)]">
+              <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+            </div>
+          </div>
+          <h3 className="mt-8 text-2xl font-black uppercase tracking-widest text-white animate-pulse">Listening...</h3>
+          <p className="mt-2 text-zinc-400 text-sm font-medium">Tap anywhere to stop</p>
+          {transcript && (
+            <div className="mt-8 max-w-lg text-center px-6">
+              <p className="text-zinc-500 text-xs uppercase tracking-widest mb-2">Live Transcript</p>
+              <p className="text-xl text-white font-medium leading-relaxed">"{transcript}"</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Audio Processing Overlay */}
+      {isProcessingAudio && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md animate-fade-in">
+          <div className="w-16 h-16 border-4 border-rose-900/20 border-t-rose-600 rounded-full animate-spin mb-6"></div>
+          <h3 className="text-xl font-black uppercase tracking-widest text-white">Processing Audio</h3>
+          <p className="mt-2 text-zinc-400 text-sm">Refining your input...</p>
         </div>
       )}
 
