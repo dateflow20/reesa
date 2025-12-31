@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeadReddit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fade-in 0.6s ease-out forwards;
+        }
+
+        @keyframes liquid-flow {
+            0% {
+                transform: translate(0px, 0px) scale(1) rotate(0deg);
+            }
+
+            50% {
+                transform: translate(50px, -30px) scale(1.1) rotate(5deg);
+            }
+
+            100% {
+                transform: translate(0px, 0px) scale(1) rotate(0deg);
+            }
+        }
+
+        .animate-liquid-flow {
+            animation: liquid-flow 20s infinite ease-in-out;
+        }
+
+        @keyframes liquid-flow-reverse {
+            0% {
+                transform: translate(0px, 0px) scale(1) rotate(0deg);
+            }
+
+            50% {
+                transform: translate(-50px, 30px) scale(1.05) rotate(-5deg);
+            }
+
+            100% {
+                transform: translate(0px, 0px) scale(1) rotate(0deg);
+            }
+        }
+
+        .animate-liquid-flow-reverse {
+            animation: liquid-flow-reverse 25s infinite ease-in-out;
+        }
+
+        @keyframes fluid-text {
+
+            0%,
+            100% {
+                transform: translateY(0px) rotate(0deg) scale(1);
+                filter: blur(0px);
+                opacity: 0.9;
+            }
+
+            50% {
+                transform: translateY(-25px) rotate(3deg) scale(1.05);
+                filter: blur(0px);
+                opacity: 1;
+                text-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
+            }
+        }
+
+        .animate-fluid-text {
+            animation: fluid-text 4s infinite ease-in-out;
+        }
+
+        @keyframes sink-rise {
+
+            0%,
+            100% {
+                transform: translateY(150px) scale(0.8);
+                opacity: 0;
+                filter: blur(10px);
+            }
+
+            40%,
+            60% {
+                transform: translateY(0px) scale(1);
+                opacity: 1;
+                filter: blur(0px);
+            }
+        }
+
+        .animate-sink-rise {
+            animation: sink-rise 10s infinite ease-in-out;
+        }
+
+        @keyframes fill-progress {
+
+            0%,
+            35% {
+                width: 0%;
+                opacity: 0;
+            }
+
+            45%,
+            55% {
+                width: 100%;
+                opacity: 1;
+            }
+
+            65%,
+            100% {
+                width: 100%;
+                opacity: 0;
+            }
+        }
+
+        .animate-fill-progress {
+            animation: fill-progress 10s infinite ease-in-out;
+        }
+    </style>
+</head>
+
+<body class="bg-black text-white">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>

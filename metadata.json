@@ -1,0 +1,8 @@
+
+{
+  "name": "LeadReddit - AI-Powered Reddit Lead Finder",
+  "description": "Scan Reddit for potential customers. Analyze your service via URL or description, generate keywords/subreddits, and find high-quality leads using Gemini and the Reddit API.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
